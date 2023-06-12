@@ -3,212 +3,133 @@ package com.exam.finalproject;
 import static androidx.constraintlayout.motion.widget.Debug.getLocation;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorManager;
 import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class NextHalaman extends AppCompatActivity implements AdapterView.OnItemSelectedListener, SensorEventListener, LocationListener {
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+
+import java.util.List;
+
+import kotlin.Suppress;
+
+public class NextHalaman extends AppCompatActivity {
     private SensorManager sensorManager;
-    TextView tv_sensor;
+    private TextView latitude, longitude, akurasi;
+    private FusedLocationProviderClient locationProviderClient;
 
-    Spinner spinner;
-
-    LocationListener locationListener;
-
-    Sensor accelerometer;
-
-    LocationManager locationManager;
+    Spinner pilih;
+    Button apply;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_next_halaman);
 
-        spinner = findViewById(R.id.spinner);
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this, R.array.option_array, android.R.layout.simple_spinner_item);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinner.setAdapter(adapter);
-
-        tv_sensor = findViewById(R.id.tv_sensor);
-
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 
-        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        latitude = findViewById(R.id.latitude);
+        longitude = findViewById(R.id.longitude);
+        akurasi = findViewById(R.id.akurasi);
+        locationProviderClient = LocationServices.getFusedLocationProviderClient(NextHalaman.this);
 
-        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-
-
-        // Membuat listener untuk spinner
-        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        apply = (Button) findViewById(R.id.btspin);
+        apply.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                String selectedOption = parent.getItemAtPosition(position).toString();
-
-                if (selectedOption.equals("cek posisi")) {
-                    checkLocationPermission();
-                } else if (selectedOption.equals("Jelajahi")){
-                    String url = "https://ump.ac.id";
-                    Intent intent = new Intent(Intent.ACTION_VIEW);
-                    intent.setData(Uri.parse(url));
-                    startActivity(intent);
-                } else if (selectedOption.equals("Hubungi")) {
-                    sendEmail();
-                } else if (selectedOption.equals("Baca data")){
-                    accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-                    if (accelerometer != null) {
-                        sensorManager.registerListener(NextHalaman.this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
-                    } else {
-                        sensorManager.unregisterListener(NextHalaman.this);
-                        tv_sensor.setText("");
-                    }
-                }
+            public void onClick(View view) {
+                pilihspin();
             }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-                // Tidak ada opsi yang dipilih
-            }
-
-            private void sendEmail() {
-                String[] TO = {"stufi1983@gmail.com"};
-                String subject = "Pesan dari aplikasi Android";
-                Intent emailIntent = new Intent(Intent.ACTION_SEND);
-                emailIntent.setData(Uri.parse("mailto:"));
-                emailIntent.setType("text/plain");
-                emailIntent.putExtra(Intent.EXTRA_EMAIL, TO);
-                emailIntent.putExtra(Intent.EXTRA_SUBJECT, subject);
-
-                try {
-                    startActivity(Intent.createChooser(emailIntent, "Pilih aplikasi email"));
-                    finish();
-                } catch (android.content.ActivityNotFoundException ex) {
-                    Toast.makeText(NextHalaman.this, "Tidak ada aplikasi email yang terpasang.", Toast.LENGTH_SHORT).show();
-                }
-            }
-
-
-
         });
 
-
-
-        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        locationListener = new LocationListener() {
-            @Override
-            public void onLocationChanged(Location location) {
-                // Menggunakan data lokasi yang diperoleh
-                double latitude = location.getLatitude();
-                double longitude = location.getLongitude();
-                String locationString = "Latitude: " + latitude + ", Longitude: " + longitude;
-
-                // Tampilkan lokasi saat ini
-                Toast.makeText(NextHalaman.this, locationString, Toast.LENGTH_LONG).show();
-            }
-
-            @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) {
-            }
-
-            @Override
-            public void onProviderEnabled(String provider) {
-            }
-
-            @Override
-            public void onProviderDisabled(String provider) {
-            }
-        };
-    }
-
-
-
-    private void checkLocationPermission() {
-        // Memeriksa izin lokasi
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-
-            // Jika izin tidak diberikan, minta izin
-            ActivityCompat.requestPermissions(this,
-                    new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION},
-                    1);
-            return;
-        }
-
-
-        // Mendapatkan lokasi saat ini
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+        pilih = (Spinner) findViewById(R.id.spin);
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantresults){
+        super.onRequestPermissionsResult(requestCode, permissions, grantresults);
+        if (requestCode == 10){
+            if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) !=
+                    PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) !=
+            PackageManager.PERMISSION_GRANTED){
 
-        // Memeriksa izin yang diberikan
-        if (requestCode == 1) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Izin diberikan, dapatkan lokasi
-                checkLocationPermission();
-            } else {
-                // Izin ditolak
-                Toast.makeText(this, "Izin lokasi ditolak", Toast.LENGTH_SHORT).show();
+            }else {
+                pilihspin();
             }
         }
     }
 
-
-    @Override
-    public void onSensorChanged(SensorEvent sensorEvent) {
-        float x = sensorEvent.values[0];
-        float y = sensorEvent.values[1];
-        float z = sensorEvent.values[2];
-
-        // Tampilkan data accelerometer pada TextView
-        String data = "X: " + x + "\nY: " + y + "\nZ: " + z;
-        tv_sensor.setText(data);
+        public void pilihspin() {
+            String pilihmenu = pilih.getSelectedItem().toString();
+            if (pilihmenu.equals("Jelajahi")) {
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.ump.ac.id"));
+                startActivity(intent);
+                Toast.makeText(this, "Tunggu..", Toast.LENGTH_SHORT).show();
+            } else if (pilihmenu.equals("Hubungi")) {
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("smsto:085724126979"));
+                intent.putExtra("sms_body", "Pesan dari aplikasi Android");
+                startActivity(intent);
+                Toast.makeText(this, "Mengirimkan pesan", Toast.LENGTH_SHORT).show();
+            } else if (pilihmenu.equals("Baca Data")) {
+                List<Sensor> deviceSensor = sensorManager.getSensorList(Sensor.TYPE_PROXIMITY);
+                AlertDialog.Builder kotakpesan = new AlertDialog.Builder(NextHalaman.this);
+                kotakpesan.setMessage(deviceSensor +"\n");
+                kotakpesan.create().show();
+            } else if (pilihmenu.equals("Cek Posisi")) {
+                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                    != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                        != PackageManager.PERMISSION_GRANTED){
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
+                                Manifest.permission.ACCESS_COARSE_LOCATION}, 10);
+                    }
+                }else {
+                    locationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>(){
+                        @SuppressLint("SetTextI18n")
+                        @Override
+                        public void onSuccess(Location location){
+                            if (location != null){
+                                latitude.setText(String.valueOf(location.getLatitude()));
+                                longitude.setText(String.valueOf(location.getLongitude()));
+                                akurasi.setText(location.getAccuracy() + "%");
+                                Toast.makeText(getBaseContext(), "Lokasi terbaca", Toast.LENGTH_LONG).show();
+                            }else {
+                                Toast.makeText(getApplicationContext(), "Meminta akses lokasi", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    }).addOnFailureListener(new OnFailureListener(){
+                        @Override
+                        public void onFailure(@NonNull Exception e){
+                            Toast.makeText(getApplicationContext(),e .getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+            }
+        }
 
 
     }
 
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int i) {
 
-    }
 
-    @Override
-    public void onLocationChanged(@NonNull Location location) {
 
-    }
 
-    @Override
-    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-
-    }
-
-    @Override
-    public void onNothingSelected(AdapterView<?> adapterView) {
-
-    }
-}
