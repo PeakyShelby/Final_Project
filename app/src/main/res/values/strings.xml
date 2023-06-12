@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Final Project</string>
+
+    <string-array name="option_array">
+        <item>Jelajahi</item>
+        <item>Hubungi</item>
+        <item>Baca data</item>
+        <item>Cek posisi</item>
+    </string-array>
+</resources>
